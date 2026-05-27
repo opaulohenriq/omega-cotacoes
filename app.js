@@ -1,8 +1,9 @@
 "use strict";
 
 var CID = '74348086108-mhu984t8osii57p052q6dgarfolopbkj.apps.googleusercontent.com';
-var SCOPES = 'https://www.googleapis.com/auth/drive.readonly profile email';
+var SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly profile email';
 var tok = null, allFiles = [], cDB = {}, pDB = {}, nxt = 992, ic = 0, acI = -1, curFile = null, drawerMode = 'clientes';
+var PASTA_ORCAMENTOS = ''; // ID da pasta ORCAMENTO 2025, descoberto automaticamente
 
 function sf(id, v) { var e = document.getElementById(id); if (e) e.value = (v || ''); }
 function gv(id) { var e = document.getElementById(id); return (e ? (e.value || '') : ''); }
@@ -524,11 +525,30 @@ function openVD(fid) {
   document.getElementById('vd-link').href = fo.link || '#';
   var c = document.getElementById('vd-content');
   c.innerHTML = '<div style="color:var(--tx3);padding:20px;text-align:center">Carregando...</div>';
+
+  // Show/hide convert button based on file type
+  var btnConvert = document.getElementById('btn-convert-pc');
+  if (!btnConvert) {
+    btnConvert = document.createElement('button');
+    btnConvert.id = 'btn-convert-pc';
+    btnConvert.className = 'btn btn-green btn-sm';
+    btnConvert.textContent = 'Converter em PC';
+    btnConvert.style.marginLeft = '6px';
+    document.getElementById('btn-editar').parentNode.insertBefore(btnConvert, document.getElementById('btn-editar').nextSibling);
+    btnConvert.addEventListener('click', converteToPedido);
+  }
+
   fetch('https://www.googleapis.com/drive/v3/files/' + fid + '?alt=media', { headers: { Authorization: 'Bearer ' + tok } })
     .then(function(r) { if (!r.ok) throw new Error(); return r.arrayBuffer(); })
     .then(function(buf) { return pXlsx(buf); })
     .then(function(d) {
-      if (!d) { c.innerHTML = '<div style="color:var(--red)">Nao foi possivel ler o arquivo.</div>'; return; }
+      if (!d) {
+        // Might be HTML file saved by us — show link to open
+        c.innerHTML = '<div style="padding:16px;background:var(--bg);border-radius:var(--r);font-size:13px;color:var(--tx2)">'
+          + 'Este arquivo foi salvo pelo sistema. <a href="' + (fo.link || '#') + '" target="_blank" style="color:var(--blue)">Abrir no Google Drive</a> para visualizar.'
+          + '</div>';
+        return;
+      }
       var ih = (d.itens || []).map(function(it) {
         return '<tr style="border-bottom:1px solid var(--b2)">'
           + '<td style="padding:7px 8px;color:var(--tx2);width:50px">' + (it.qtde || '-') + '</td>'
@@ -552,6 +572,45 @@ function openVD(fid) {
 function backToList() {
   document.getElementById('vlist').style.display = 'block';
   document.getElementById('vdetail').style.display = 'none';
+}
+
+function converteToPedido() {
+  if (!curFile) return;
+  if (!confirm('Converter o orcamento N' + curFile.num + ' de ' + curFile.empresa + ' em Pedido de Compra?\n\nO arquivo original no Drive sera substituido.')) return;
+
+  // Ask for PC numbers
+  var pcn = window.prompt('Numero do seu pedido Omega (ex: PC-2025-001):', '');
+  var pcc = window.prompt('Numero de pedido do cliente ou referencia verbal:', '');
+
+  toast('Carregando cotacao para converter...', 'info');
+
+  fetch('https://www.googleapis.com/drive/v3/files/' + curFile.id + '?alt=media', { headers: { Authorization: 'Bearer ' + tok } })
+    .then(function(r) { if (!r.ok) throw new Error(); return r.arrayBuffer(); })
+    .then(function(buf) { return pXlsx(buf); })
+    .then(function(d) {
+      if (!d && curFile.link) {
+        toast('Nao foi possivel ler o arquivo para converter', 'error'); return;
+      }
+      // Load into form and generate as PC
+      limpar(true);
+      if (d) {
+        sf('f-num', curFile.num);
+        sf('f-nome', d.nome || curFile.empresa);
+        sf('f-fone', d.fone || ''); sf('f-email', d.email || '');
+        sf('f-cidade', d.cidade || ''); sf('f-comp', d.comp || '');
+        sf('f-nfe', d.nfe || ''); sf('f-bol', d.bol || '');
+        (d.itens || []).forEach(function(it) { addItem(it.desc, it.qtde, it.preco > 0 ? it.preco : ''); });
+      }
+      if (pcn) sf('f-pcn', pcn);
+      if (pcc) sf('f-pcc', pcc);
+
+      document.getElementById('modal-view').classList.remove('open');
+      toast('Cotacao carregada. Ajuste os campos e clique em "Pedido de Compra PDF" para gerar e salvar.', 'success');
+
+      // Mark curFile so genPDF('p') knows which file to overwrite
+      // genPDF already uses curFile.id for PC saves
+    })
+    .catch(function() { toast('Erro ao carregar cotacao', 'error'); });
 }
 
 function loadForEdit() {
@@ -608,6 +667,67 @@ function saveProds() {
   pDB = nb; saveL();
   document.getElementById('modal-prods').classList.remove('open');
   toast('Banco de produtos salvo!', 'success');
+}
+
+// FIND ORCAMENTO 2025 FOLDER
+function findOrcamentoFolder() {
+  if (PASTA_ORCAMENTOS) return Promise.resolve(PASTA_ORCAMENTOS);
+  var q = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='ORCAMENTO 2025' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)&pageSize=5', { headers: { Authorization: 'Bearer ' + tok } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var files = data.files || [];
+      if (files.length) { PASTA_ORCAMENTOS = files[0].id; return PASTA_ORCAMENTOS; }
+      // Folder not found — create it
+      return fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'ORCAMENTO 2025', mimeType: 'application/vnd.google-apps.folder' })
+      }).then(function(r) { return r.json(); }).then(function(f) { PASTA_ORCAMENTOS = f.id; return f.id; });
+    });
+}
+
+// SAVE HTML AS PDF-READY FILE IN DRIVE (saves as Google Doc / HTML)
+function saveToDrive(htmlContent, filename, existingFileId) {
+  if (!tok) { toast('Faca login para salvar no Drive', 'error'); return Promise.reject(); }
+  return findOrcamentoFolder().then(function(folderId) {
+    var blob = new Blob([htmlContent], { type: 'text/html' });
+    var meta = {
+      name: filename,
+      mimeType: 'text/html',
+      parents: existingFileId ? undefined : [folderId]
+    };
+    var form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+    form.append('file', blob);
+
+    var url, method;
+    if (existingFileId) {
+      url = 'https://www.googleapis.com/upload/drive/v3/files/' + existingFileId + '?uploadType=multipart';
+      method = 'PATCH';
+    } else {
+      url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+      method = 'POST';
+    }
+    return fetch(url, { method: method, headers: { Authorization: 'Bearer ' + tok }, body: form })
+      .then(function(r) { return r.json(); });
+  });
+}
+
+// SAVE XLSX-LIKE CSV TO DRIVE (saves data as xlsx using a simple approach)
+function saveCotacaoToDrive(num, empresa, ddmm, htmlContent, existingFileId) {
+  var filename = num + ' ' + empresa + ' ' + ddmm + '.html';
+  return saveToDrive(htmlContent, filename, existingFileId)
+    .then(function(file) {
+      toast('Salvo no Drive: ' + filename, 'success');
+      // Update allFiles list
+      var ddmmToday = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}).replace('/','');
+      var existing = allFiles.find(function(f) { return f.num === String(num); });
+      if (!existing) {
+        allFiles.unshift({ id: file.id, raw: filename, num: String(num), empresa: empresa, ddmm: ddmm || ddmmToday, link: 'https://drive.google.com/file/d/' + file.id });
+      }
+      return file;
+    });
 }
 
 // PDF
@@ -751,7 +871,22 @@ function genPDF(tipo) {
         if (!w) { toast('Permita popups para gerar PDF', 'error'); return; }
         w.document.write(html); w.document.close();
         setTimeout(function() { w.print(); }, 800);
-        if (isC) { nxt++; sf('f-num', String(nxt)); document.getElementById('num-badge').textContent = 'Prox: N' + nxt; saveL(); }
+
+        if (isC) {
+          // Save to Drive
+          var ddmmToday = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}).replace('/','');
+          var empresa = nome || 'CLIENTE';
+          saveCotacaoToDrive(num, empresa, ddmmToday, html, null)
+            .catch(function() { toast('PDF gerado mas nao foi possivel salvar no Drive', 'error'); });
+          nxt++; sf('f-num', String(nxt)); document.getElementById('num-badge').textContent = 'Prox: N' + nxt; saveL();
+        } else {
+          // Pedido de compra — overwrite existing file if came from curFile
+          if (curFile && curFile.id) {
+            saveToDrive(html, curFile.raw + '.html', curFile.id)
+              .then(function() { toast('Pedido de Compra salvo no Drive (substituiu orcamento)', 'success'); })
+              .catch(function() { toast('PDF gerado mas nao foi possivel salvar no Drive', 'error'); });
+          }
+        }
       });
     });
   });
