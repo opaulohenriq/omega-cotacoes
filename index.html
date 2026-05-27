@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omega Fix — Cotacoes</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;--bg4:#252525;--border:#2a2a2a;--border2:#333;--text:#e8e8e2;--text2:#9a9a92;--text3:#5a5a54;--accent:#c8f060;--accent2:#a8d040;--adim:rgba(200,240,96,0.08);--adim2:rgba(200,240,96,0.18);--red:#ff6b6b;--rdim:rgba(255,107,107,0.1);--blue:#60a8f0;--purple:#b060f0;--r:8px;--rl:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:200;}
+.hlogo{display:flex;align-items:center;gap:10px;}
+.hlogo img{width:36px;height:36px;object-fit:contain;}
+.hlogo-text{font-size:14px;font-weight:600;}
+.hlogo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.hright{display:flex;align-items:center;gap:8px;}
+#user-chip{display:none;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:99px;padding:4px 10px 4px 4px;font-size:12px;color:var(--text2);}
+#user-av{width:22px;height:22px;border-radius:50%;background:var(--adim2);color:var(--accent);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+#num-badge{display:none;background:var(--adim2);color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid rgba(200,240,96,.3);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#0f0f0f;}.btn-primary:hover{background:var(--accent2);}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--adim);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,107,107,.25);}
+.btn-blue{background:rgba(96,168,240,.12);color:var(--blue);border:1px solid rgba(96,168,240,.3);}
+.btn-purple{background:rgba(176,96,240,.12);color:var(--purple);border:1px solid rgba(176,96,240,.3);}
+.btn-sm{padding:5px 10px;font-size:12px;}.btn-xs{padding:3px 8px;font-size:11px;}.btn:disabled{opacity:.4;cursor:not-allowed;}
+#app{display:flex;height:calc(100vh - 53px);}
+#sidebar{width:280px;min-width:280px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.stabs{display:flex;gap:2px;padding:10px 10px 0;}
+.stab{flex:1;padding:6px;text-align:center;font-size:11px;font-weight:600;border-radius:6px 6px 0 0;cursor:pointer;color:var(--text3);transition:all .12s;border-bottom:2px solid transparent;}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--adim);}
+.s-search{padding:8px 10px;border-bottom:1px solid var(--border);}
+.s-wrap{position:relative;}
+.s-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px 6px 28px;color:var(--text);font-size:12px;outline:none;transition:border-color .15s;}
+.s-wrap input:focus{border-color:var(--accent);}
+.s-wrap input::placeholder{color:var(--text3);}
+.s-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;}
+.s-actions{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;gap:6px;}
+#slist{flex:1;overflow-y:auto;padding:6px;}
+#slist::-webkit-scrollbar{width:3px;}
+#slist::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.si{padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:2px;}
+.si:hover{background:var(--bg3);border-color:var(--border);}
+.si.active{background:var(--adim);border-color:rgba(200,240,96,.35);}
+.si-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.si-meta{font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.badge{background:var(--adim2);color:var(--accent);padding:1px 6px;border-radius:99px;font-size:10px;}
+.badge-blue{background:rgba(96,168,240,.12);color:var(--blue);}
+.badge-or{background:rgba(240,160,96,.12);color:#f0a060;}
+.empty{padding:24px 12px;text-align:center;color:var(--text3);font-size:12px;line-height:2;}
+#main{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+#main::-webkit-scrollbar{width:3px;}
+#main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px;}
+.ctitle{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.cdot{width:5px;height:5px;border-radius:50%;background:var(--accent);}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.full{grid-column:1/-1;}
+label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+input[type=text],input[type=date],input[type=number],select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;width:100%;}
+input:focus,select:focus{border-color:var(--accent);background:var(--bg4);}
+input::placeholder{color:var(--text3);}
+select{cursor:pointer;}select option{background:var(--bg3);}
+.cnpj-row{display:flex;gap:8px;align-items:flex-end;}.cnpj-row input{flex:1;}
+#cnpj-st{font-size:11px;color:var(--text3);margin-top:3px;min-height:14px;}
+#cnpj-st.ok{color:var(--accent);}#cnpj-st.err{color:var(--red);}
+.hbanner{background:var(--adim);border:1px solid rgba(200,240,96,.3);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--text2);margin-bottom:10px;display:none;align-items:center;justify-content:space-between;gap:8px;}
+.hbanner.show{display:flex;}
+.ihead{display:grid;grid-template-columns:52px 1fr 70px 78px 88px 88px 32px;gap:5px;padding:5px 8px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+#ibody{display:flex;flex-direction:column;gap:2px;padding:4px 0;}
+.irow{border-radius:var(--r);border:1px solid transparent;}
+.irow:hover{background:var(--bg3);border-color:var(--border);}
+.irow-m{display:grid;grid-template-columns:52px 1fr 70px 78px 88px 88px 32px;gap:5px;align-items:center;padding:4px 8px;}
+.irow-m input{padding:5px 7px;font-size:13px;}
+.irow-x{padding:4px 8px 8px 60px;display:none;flex-direction:column;gap:6px;}
+.irow-x.show{display:flex;}
+.iprev{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.ithumb{position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border2);}
+.ithumb img{width:100%;height:100%;object-fit:cover;}
+.ithumb .xbtn{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;color:#fff;border:none;}
+.pthumb{display:flex;align-items:center;gap:6px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:11px;}
+.uwrap{position:relative;overflow:hidden;display:inline-flex;}
+.uwrap input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;}
+.dwrap{position:relative;}
+.acl{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:400;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.5);max-height:180px;overflow-y:auto;display:none;}
+.acl.open{display:block;}
+.aci{padding:7px 10px;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;align-items:center;}
+.aci:hover,.aci.sel{background:var(--adim);color:var(--accent);}
+.acpr{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+.itot{font-family:'DM Mono',monospace;font-size:12px;text-align:right;}
+.itot.zero{color:var(--text3);}
+.rmb{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:15px;}
+.rmb:hover{background:var(--rdim);color:var(--red);}
+.ifoot{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 0;border-top:1px solid var(--border);margin-top:4px;}
+.tlabel{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.tval{font-size:20px;font-weight:500;color:var(--accent);font-family:'DM Mono',monospace;}
+.abar{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:4px;}
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.moverlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);width:90%;max-width:800px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+.mhdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mtitle{font-size:15px;font-weight:600;}
+.mbody{flex:1;overflow-y:auto;padding:18px;}
+.mftr{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.vitem{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;cursor:pointer;transition:all .12s;margin-bottom:6px;}
+.vitem:hover{border-color:var(--accent);background:var(--adim);}
+.vitem-t{font-size:13px;font-weight:500;}
+.vitem-m{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
+.prow{display:grid;grid-template-columns:1fr 90px 90px 28px;gap:6px;align-items:center;padding:6px 8px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);margin-bottom:4px;}
+.prow input{font-size:12px;padding:4px 7px;}
+.pcsec{background:rgba(176,96,240,.06);border:1px solid rgba(176,96,240,.2);border-radius:var(--r);padding:12px;}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);border-top-color:var(--accent);animation:sp .7s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg);}}
+#toast{position:fixed;bottom:20px;right:20px;z-index:999;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--rl);padding:10px 16px;font-size:13px;color:var(--text);transform:translateY(60px);opacity:0;transition:all .25s;display:flex;align-items:center;gap:8px;max-width:340px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{border-color:var(--accent);}#toast.error{border-color:var(--red);}
+#lscreen{position:fixed;inset:0;z-index:600;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.lcard{width:360px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;}
+.llogo{margin-bottom:14px;}
+.llogo img{width:70px;height:70px;object-fit:contain;}
+.ltitle{font-size:18px;font-weight:600;margin-bottom:4px;}
+.lsub{font-size:12px;color:var(--text2);margin-bottom:22px;line-height:1.7;}
+.gbtn{width:100%;padding:11px;border-radius:var(--r);background:#fff;color:#1a1a1a;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;}
+.gbtn:hover{background:#f0f0f0;}
+.gsvg{width:18px;height:18px;flex-shrink:0;}
+.lnote{font-size:10px;color:var(--text3);margin-top:12px;line-height:1.7;}
+#lbar{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:999;transition:width .3s;width:0;}
+</style>
+</head>
+<body>
+<div id="lbar"></div>
+<div id="lscreen">
+  <div class="lcard">
+    <div class="llogo"><img src="logo.png" alt="Omega Fix"></div>
+    <div class="ltitle">Omega Fix Cotacoes</div>
+    <div class="lsub">Sistema integrado ao Google Drive.<br>Entre com sua conta para comecar.</div>
+    <button class="gbtn" id="btn-login">
+      <svg class="gsvg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.2 26.8 36 24 36c-5.3 0-9.7-3.4-11.3-8l-6.5 5C9.5 39.5 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C37 38.1 44 33 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Entrar com Google
+    </button>
+    <div class="lnote">Somente leitura — nenhum dado enviado a servidores externos</div>
+  </div>
+</div>
+<header>
+  <div class="hlogo"><img src="logo.png" alt="Omega Fix"><div><div class="hlogo-text">Omega Fix</div><div class="hlogo-sub">cotacoes v3</div></div></div>
+  <div class="hright">
+    <span id="num-badge"></span>
+    <div id="user-chip"><div id="user-av"></div><span id="user-name"></span></div>
+    <button class="btn btn-ghost btn-sm" id="btn-so" style="display:none">Sair</button>
+  </div>
+</header>
+<div id="app">
+  <div id="sidebar">
+    <div class="stabs">
+      <div class="stab active" id="tab-cli">Clientes</div>
+      <div class="stab" id="tab-cot">Cotacoes</div>
+      <div class="stab" id="tab-prod">Produtos</div>
+    </div>
+    <div class="s-search"><div class="s-wrap"><span class="s-icon">&#9906;</span><input type="text" id="s-search" placeholder="Buscar..."></div></div>
+    <div class="s-actions">
+      <button class="btn btn-ghost btn-sm" id="btn-sync" style="flex:1"><span class="spin" id="sync-sp" style="display:none"></span> Sincronizar</button>
+      <button class="btn btn-ghost btn-sm" id="btn-addprod">+ Produto</button>
+    </div>
+    <div id="slist"><div class="empty">&#128194;<br>Conecte ao Google Drive<br>para carregar historico</div></div>
+  </div>
+  <div id="main">
+    <div class="card">
+      <div class="ctitle"><span class="cdot"></span>Identificacao</div>
+      <div class="g3">
+        <div class="fg"><label>N Orcamento</label><input type="text" id="f-num" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--accent)"></div>
+        <div class="fg"><label>Data</label><input type="date" id="f-data"></div>
+        <div class="fg"><label>Validade</label><input type="date" id="f-val"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="cdot"></span>Cliente</div>
+      <div id="hbanner" class="hbanner"><span id="hbanner-txt"></span><button class="btn btn-xs btn-ghost" id="btn-vercots">Ver cotacoes</button></div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>CNPJ</label>
+        <div class="cnpj-row"><input type="text" id="f-cnpj" placeholder="00.000.000/0001-00" maxlength="18"><button class="btn btn-ghost btn-sm" id="btn-cnpj">Buscar</button></div>
+        <div id="cnpj-st"></div>
+      </div>
+      <div class="g2">
+        <div class="fg full"><label>Razao Social</label><input type="text" id="f-nome" placeholder="Nome da empresa"></div>
+        <div class="fg"><label>Telefone</label><input type="text" id="f-fone" placeholder="(15) 99999-9999"></div>
+        <div class="fg"><label>Email</label><input type="text" id="f-email" placeholder="contato@empresa.com.br"></div>
+        <div class="fg"><label>Cidade / UF</label><input type="text" id="f-cidade" placeholder="Sorocaba / SP"></div>
+        <div class="fg"><label>Comprador</label><input type="text" id="f-comp" placeholder="Nome do comprador"></div>
+        <div class="fg"><label>Email NF-e</label><input type="text" id="f-nfe" placeholder="nfe@empresa.com.br"></div>
+        <div class="fg"><label>Email Boletos</label><input type="text" id="f-bol" placeholder="financeiro@empresa.com.br"></div>
+        <div class="fg"><label>Vendedor</label><input type="text" id="f-vend" value="Paulo Henrique"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="cdot"></span>Itens</div>
+      <div class="ihead"><span>Qtde</span><span>Descricao</span><span style="text-align:center">Dif.Aliq</span><span style="text-align:center">Prazo</span><span style="text-align:right">Unit R$</span><span style="text-align:right">Total R$</span><span></span></div>
+      <div id="ibody"></div>
+      <div class="ifoot"><button class="btn btn-ghost btn-sm" id="btn-additem">+ Item</button><div><div class="tlabel">Total</div><div class="tval" id="gtotal">R$ 0,00</div></div></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="cdot"></span>Pedido de compra</div>
+      <div class="pcsec"><div class="g2">
+        <div class="fg"><label>Meu n de pedido (Omega)</label><input type="text" id="f-pcn" placeholder="PC-2025-001"></div>
+        <div class="fg"><label>Pedido cliente / verbal</label><input type="text" id="f-pcc" placeholder="PED-4521 ou Verbal Joao"></div>
+      </div></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="cdot"></span>Condicoes</div>
+      <div class="g2">
+        <div class="fg"><label>Prazo</label><select id="f-prazo"><option>14 DDL</option><option>28 DDL</option><option>30 DDL</option><option>A vista</option><option>Boleto 14/28</option><option>Boleto 14/28/42</option></select></div>
+        <div class="fg"><label>Frete</label><select id="f-frete"><option>FOB | CORREIOS</option><option>CIF</option><option>FOB</option><option>A combinar</option></select></div>
+        <div class="fg"><label>Finalidade</label><select id="f-final"><option>Uso/consumo e estoque</option><option>Industrializacao</option><option>Revenda</option></select></div>
+      </div>
+    </div>
+    <div class="abar">
+      <button class="btn btn-primary" id="btn-pdf-cot">Gerar Cotacao PDF</button>
+      <button class="btn btn-purple" id="btn-pdf-ped">Pedido Compra PDF</button>
+      <button class="btn btn-ghost" id="btn-msg">Copiar msg</button>
+      <button class="btn btn-blue" id="btn-view">Ver cotacoes antigas</button>
+      <button class="btn btn-ghost btn-sm" id="btn-nova" style="margin-left:auto">+ Nova</button>
+      <button class="btn btn-danger btn-sm" id="btn-limpar">Limpar</button>
+    </div>
+    <div style="height:28px"></div>
+  </div>
+</div>
+<div class="moverlay" id="modal-view">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Cotacoes no Drive</div><button class="btn btn-ghost btn-sm" id="btn-close-view">Fechar</button></div>
+    <div class="mbody">
+      <div class="fg" style="margin-bottom:12px"><input type="text" id="vsearch" placeholder="Buscar..." style="width:100%"></div>
+      <div id="vlist"></div>
+      <div id="vdetail" style="display:none;margin-top:16px">
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+          <button class="btn btn-ghost btn-sm" id="btn-back">Voltar</button>
+          <span id="vd-title" style="font-weight:500;font-size:14px"></span>
+          <button class="btn btn-xs btn-ghost" id="btn-editar" style="margin-left:auto">Editar esta cotacao</button>
+        </div>
+        <div id="vd-content"></div>
+        <div style="margin-top:12px"><a id="vd-link" href="#" target="_blank" class="btn btn-blue btn-sm">Abrir no Google Drive</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="moverlay" id="modal-prods">
+  <div class="modal" style="max-width:600px">
+    <div class="mhdr"><div class="mtitle">Banco de Produtos</div><button class="btn btn-ghost btn-sm" id="btn-close-prods">Fechar</button></div>
+    <div class="mbody"><p style="font-size:12px;color:var(--text2);margin-bottom:14px">Cadastre produtos com preco e prazo.</p><div id="prows"></div><button class="btn btn-ghost btn-sm" id="btn-addprow" style="margin-top:8px">+ Adicionar</button></div>
+    <div class="mftr"><button class="btn btn-ghost" id="btn-cancel-prods">Cancelar</button><button class="btn btn-primary" id="btn-save-prods">Salvar</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
