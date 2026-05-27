@@ -1,20 +1,20 @@
-(function(){
-'use strict';
+"use strict";
+
 
 var CID = '74348086108-mhu984t8osii57p052q6dgarfolopbkj.apps.googleusercontent.com';
 var SCOPES = 'https://www.googleapis.com/auth/drive.readonly profile email';
 var tok = null, allFiles = [], cDB = {}, pDB = {}, nxt = 992, ic = 0, acI = -1, curTab = 'clientes', curFile = null;
 
-// ── HELPERS ──
-function sf(id,v){var e=document.getElementById(id);if(e)e.value=v||'';}
-function gv(id){var e=document.getElementById(id);return e?e.value||'';}
+//  HELPERS 
+function sf(id,v){var e=document.getElementById(id);if(e)e.value=(v||'');}
+function gv(id){var e=document.getElementById(id);return (e ? (e.value || '') : '');}
 function saveL(){try{localStorage.setItem('ocdb',JSON.stringify(cDB));localStorage.setItem('opdb',JSON.stringify(pDB));localStorage.setItem('onum',String(nxt));}catch(e){}}
 function loadL(){try{var c=localStorage.getItem('ocdb');if(c)cDB=JSON.parse(c);var p=localStorage.getItem('opdb');if(p)pDB=JSON.parse(p);var n=localStorage.getItem('onum');if(n)nxt=parseInt(n)||992;}catch(e){}}
 function enc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function br(n){return Number(n).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 function fd(d){if(!d)return'-';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 
-// ── WIRE BUTTONS ──
+//  WIRE BUTTONS 
 document.getElementById('btn-login').addEventListener('click', signIn);
 document.getElementById('btn-so').addEventListener('click', signOut);
 document.getElementById('btn-sync').addEventListener('click', syncDrive);
@@ -43,7 +43,7 @@ document.getElementById('btn-cnpj').addEventListener('click', buscarCNPJ);
 document.getElementById('f-cnpj').addEventListener('input', function(){fmtC(this);});
 document.getElementById('f-nome').addEventListener('input', function(){onNome(this.value);});
 
-// ── AUTH ──
+//  AUTH 
 function signIn(){
   var btn = document.getElementById('btn-login');
   btn.disabled = true;
@@ -103,7 +103,7 @@ function getUI(){
   }).catch(function(){});
 }
 
-// ── DRIVE ──
+//  DRIVE 
 function setLoad(on){
   document.getElementById('sync-sp').style.display=on?'inline-block':'none';
   var b=document.getElementById('lbar');
@@ -238,7 +238,7 @@ function pCells(xml,ss){
   return c;
 }
 
-// ── SIDEBAR ──
+//  SIDEBAR 
 function switchTab(t){
   curTab=t;
   document.getElementById('tab-cli').classList.toggle('active',t==='clientes');
@@ -306,7 +306,7 @@ function selCli(el,emp){
     sf('f-comp',cd.comp||''); sf('f-nfe',cd.nfe||''); sf('f-bol',cd.bol||'');
     var cots=cd.cotacoes||[];
     var bn=document.getElementById('hbanner');
-    document.getElementById('hbanner-txt').innerHTML='<strong>'+cots.length+' cotacao(oes)</strong> — ult: '+(cots[0]?cots[0].ddmm:'-');
+    document.getElementById('hbanner-txt').innerHTML='<strong>'+cots.length+' cotacao(oes)</strong>  ult: '+(cots[0]?cots[0].ddmm:'-');
     bn.dataset.emp=emp; bn.classList.add('show');
   }
   toast('Cliente carregado','success');
@@ -324,7 +324,7 @@ function onNome(val){
   }
 }
 
-// ── CNPJ ──
+//  CNPJ 
 function fmtC(inp){
   var v=inp.value.replace(/\D/g,'');
   if(v.length>14) v=v.slice(0,14);
@@ -352,7 +352,7 @@ function buscarCNPJ(){
 
 function setSt(m,c){var e=document.getElementById('cnpj-st');e.textContent=m;e.className=c;}
 
-// ── ITENS ──
+//  ITENS 
 function addItem(desc,qtde,unit,dif,prazo){
   desc=desc||''; qtde=qtde||''; unit=unit||''; dif=dif||''; prazo=prazo||'';
   var id=++ic;
@@ -430,7 +430,7 @@ function cT(){
   document.getElementById('gtotal').textContent='R$ '+br(s);
 }
 
-// ── AUTOCOMPLETE ──
+//  AUTOCOMPLETE 
 function shAC(id,val){
   var list=document.getElementById('ac-'+id);
   if(!val||val.length<1){list.classList.remove('open');return;}
@@ -464,7 +464,7 @@ function acKey(e,id){
   items.forEach(function(el,i){el.classList.toggle('sel',i===acI);});
 }
 
-// ── VER COTACOES ──
+//  VER COTACOES 
 function openView(q){
   renderVL(q);
   document.getElementById('vlist').style.display='block';
@@ -542,7 +542,7 @@ function loadForEdit(){
   }).catch(function(){toast('Erro','error');});
 }
 
-// ── PRODUTOS ──
+//  PRODUTOS 
 function openProds(){rProws(); document.getElementById('modal-prods').classList.add('open');}
 
 function rProws(){
@@ -580,7 +580,7 @@ function saveProds(){
   toast('Banco salvo!','success');
 }
 
-// ── PDF ──
+//  PDF 
 function gRows(){
   var rows=[];
   document.querySelectorAll('[id^="q-"]').forEach(function(el){
@@ -726,5 +726,3 @@ function setDef(){
 
 loadL();
 setDef();
-
-})();
